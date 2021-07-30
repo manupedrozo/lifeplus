@@ -1,0 +1,35 @@
+plugins {
+	id 'org.springframework.boot' version '2.1.4.RELEASE'
+	id 'java'
+}
+
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'scala'
+
+group = 'com.lifeplus'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation('org.scala-lang:scala-library:2.12.5')
+	implementation 'com.google.firebase:firebase-admin:6.9.0'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-mail', version: '2.2.0.RELEASE'
+	runtimeOnly 'org.postgresql:postgresql'
+	implementation 'io.springfox:springfox-swagger2:2.9.2'
+	implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+	implementation 'org.springframework.boot:spring-boot-starter-security:2.0.4.RELEASE'
+	implementation 'io.jsonwebtoken:jjwt:0.9.1'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation group: 'com.h2database', name: 'h2', version: '1.4.199'
+	testImplementation group: 'org.springframework.security', name: 'spring-security-test', version: '4.0.0.RELEASE'
+	implementation group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.11.560'
+	implementation group: 'org.springframework', name: 'spring-websocket', version: '5.1.7.RELEASE'
+	implementation group: 'org.springframework', name: 'spring-messaging', version: '5.1.7.RELEASE'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-websocket', version: '2.1.9.RELEASE'
+}

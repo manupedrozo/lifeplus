@@ -1,0 +1,165 @@
+<html>
+<head>
+    <title>Test WebSocket</title>
+
+    <script src="./js/sockjs-0.3.4.js"></script>
+    <script src="./js/stomp.js"></script>
+
+    <script type="text/javascript">
+
+        class ActivityRoutineForm {
+            constructor(patient, date, routine, activityExercises) {
+                this.patient = patient;
+                this.date = date;
+                this.routine = routine;
+                this.activityExercises = activityExercises;
+            }
+        }
+
+       class ActivityExerciseForm {
+            constructor(assignedExercise, duration, repetitions, sets) {
+                this.assignedExercise = assignedExercise;
+                this.duration = duration;
+                this.repetitions = repetitions;
+                this.sets = sets;
+            }
+       }
+
+        class ActivityIds {
+            constructor(activityRoutine, activityExercises) {
+                this.activityRoutine = activityRoutine;
+                this.activityExercises = activityExercises;
+            }
+        }
+
+        let stompClient = null;
+        let patientId = null;
+        let activityIds = null;
+        let routineForm = null;
+
+        function setConnected(connected) {
+            document.getElementById('connect').disabled = connected;
+            document.getElementById('disconnect').disabled = !connected;
+            if (connected === false)
+                document.getElementById('sensor-data').style.visibility = 'hidden';
+        }
+
+        function setInActivity() {
+            document.getElementById('sensor-data').style.visibility = 'visible';
+        }
+
+        function connect() {
+            patientId = document.getElementById('patientId').value;
+
+            const socket = new WebSocket('ws://localhost:8080/ws');
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function(frame) {
+
+                setConnected(true);
+                console.log('Connected: ' + frame);
+                stompClient.subscribe('/activity_routine', function(messageOutput) {
+                    showMessageOutput(JSON.parse(messageOutput.body));
+                });
+                stompClient.subscribe('/data', function(messageOutput) {
+                    showMessageOutput(JSON.parse(messageOutput.body));
+                });
+                stompClient.subscribe('/user/queue/reply', function(messageOutput) {
+                    const resp = JSON.parse(messageOutput.body);
+                    activityIds = resp;
+                    setInActivity();
+                    showMessageOutput(resp);
+                    showCurrentRoutine();
+                });
+                stompClient.subscribe('/user/queue/error', function(messageOutput) {
+                    showMessageOutput(messageOutput);
+                });
+            });
+        }
+
+        function disconnect() {
+
+            if(stompClient != null) {
+                stompClient.disconnect();
+            }
+
+            setConnected(false);
+            console.log("Disconnected");
+        }
+
+        function startRoutine() {
+            let routineId = document.getElementById('routineId').value;
+            let exercise1 = new ActivityExerciseForm(69, 10, null, null);
+            let exercise2 = new ActivityExerciseForm(70, null, 5, 3);
+            routineForm = new ActivityRoutineForm(patientId, new Date(), routineId, [exercise1, exercise2]);
+
+            stompClient.send("/activity_routine", {}, JSON.stringify(routineForm));
+        }
+
+        function finishRoutine() {
+            stompClient.send("/borg", {}, JSON.stringify({'activityRoutine': activityIds.activityRoutine, 'borg': 7}));
+            hideCurrentRoutine();
+        }
+
+        function sendData() {
+            const bpm = document.getElementById('bpm').value;
+            const exerciseNumber = document.getElementById('exerciseNumber').value;
+            stompClient.send("/data", {}, JSON.stringify({'activityExercise': activityIds.activityExercises[exerciseNumber], 'bpm': parseInt(bpm), 'date': new Date()}));
+        }
+
+        function showMessageOutput(messageOutput) {
+            console.log(messageOutput);
+        }
+
+        function showCurrentRoutine() {
+            for (let i = 0; i < routineForm.activityExercises.length; i++) {
+                const p = document.createElement('p');
+                p.appendChild(document.createTextNode("Exercise " + i.toString() + ": "
+                    + JSON.stringify(routineForm.activityExercises[i]) + "\n"));
+                document.getElementById("current-routine").appendChild(p);
+            }
+        }
+
+        function hideCurrentRoutine() {
+            document.getElementById("current-routine").innerHTML = '';
+        }
+
+    </script>
+
+</head>
+
+<body onload="disconnect()">
+
+<div>
+    <div>
+        <label>Patient id:</label>
+        <input id="patientId">
+        <br />
+        <button id="connect" onclick="connect();">Connect</button>
+        <button id="disconnect" disabled="disabled" onclick="disconnect();">Disconnect</button>
+    </div>
+    <br />
+    <div>
+        <label>Routine id:</label>
+        <input id="routineId">
+    </div>
+    <br />
+    <div>
+        <button id="startRoutine" onclick="startRoutine();">Start routine</button>
+        <button id="finishRoutine" onclick="finishRoutine();">Finish routine</button>
+    </div>
+    <br />
+    <div id="sensor-data">
+        <label>Exercise:</label>
+        <input type="number" id="exerciseNumber" placeholder="0" min="0"/>
+        <label>Bmp:</label>
+        <input type="number" id="bpm" placeholder="Bpm..."/>
+        <button id="sendMessage" onclick="sendData();">Send</button>
+    </div>
+    <div id="current-routine">
+
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,54 @@
+<html>
+<head>
+    <title>Test WebSocket</title>
+
+    <script src="./js/sockjs-0.3.4.js"></script>
+
+    <script type="text/javascript">
+        let sock;
+        function connect() {
+            sock = new SockJS('http://localhost:8080/greeting');
+
+            sock.onopen = function() {
+                console.log('Connected');
+            };
+            sock.onmessage = function(e) {
+                console.log('message: ', e.data);
+            };
+            sock.onclose = function() {
+                console.log('Disconnected');
+            };
+        }
+
+        function sendMessage() {
+            let from = "web";
+            let text = document.getElementById('text').value;
+            let time = new Date();
+            sock.send(JSON.stringify({'from':from, 'text':text, 'time': time}));
+        }
+
+        function disconnect() {
+            sock.close();
+        }
+
+    </script>
+
+</head>
+
+<body>
+
+<div>
+    <div>
+        <label>Text:</label>
+        <input id="text">
+        <br />
+        <button id="connect" onclick="connect()">Connect</button>
+        <button id="disconnect" onclick="disconnect()">Disconnect</button>
+        <br/>
+        <button id="send" onclick="sendMessage()">Send</button>
+    </div>
+    <br />
+</div>
+
+</body>
+</html>
